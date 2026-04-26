@@ -1,37 +1,37 @@
 # smartest-playwright-example
 
-[smartest](https://rubygems.org/gems/smartest) と [playwright-ruby-client](https://github.com/YusukeIwaki/playwright-ruby-client) を組み合わせて、ブラウザ自動操作テストを書く最小サンプルです。
+A minimal example that combines [smartest](https://rubygems.org/gems/smartest) with [playwright-ruby-client](https://github.com/YusukeIwaki/playwright-ruby-client) to drive a real browser from a Ruby test suite.
 
-rubygems.org のトップページから "smartest" を検索し、検索結果の gem 詳細ページに表示されるオーナーが `YusukeIwaki` であることを確認します。
+The single test opens rubygems.org, searches for `smartest`, follows the result to the gem detail page, and verifies that the gem is owned by `YusukeIwaki`.
 
-## 必要な環境
+## Requirements
 
-- Ruby 3.1+ (smartest 0.1.0.alpha1 の `required_ruby_version`)
-- Node.js (playwright CLI を呼び出すため)
-- bundler
+- Ruby 3.1+ (smartest 0.1.0.alpha1 declares `required_ruby_version >= 3.1`)
+- Node.js (playwright-ruby-client invokes the Playwright CLI)
+- Bundler
 
-## セットアップ
+## Setup
 
-Ruby 側の依存をインストール:
+Install the Ruby dependencies:
 
 ```bash
 bundle install
 ```
 
-Playwright CLI と Chromium を取得:
+Install the Playwright CLI and download Chromium:
 
 ```bash
 npm install playwright
 npx playwright install chromium
 ```
 
-## テストの実行
+## Run the test
 
 ```bash
 bundle exec smartest
 ```
 
-成功時の出力:
+Expected output:
 
 ```
 Running 1 test
@@ -39,30 +39,39 @@ Running 1 test
 1 test, 1 passed, 0 failed
 ```
 
-## ファイル構成
+## Project layout
 
 ```
 .
 ├── Gemfile                                 # smartest, playwright-ruby-client
-├── package.json                            # playwright (npm)
+├── package.json                            # playwright (npm) — provides the Playwright CLI
 └── smartest/
-    ├── test_helper.rb                      # smartest/autorun と fixtures の読み込み
+    ├── test_helper.rb                      # loads smartest/autorun and every file under fixtures/
     ├── fixtures/
-    │   └── playwright_fixture.rb           # Playwright 起動と Page 生成のフィクスチャ
-    └── rubygems_search_test.rb             # rubygems.org 検索テスト
+    │   └── playwright_fixture.rb           # Playwright runtime, browser, and page fixtures
+    └── rubygems_search_test.rb             # the rubygems.org search test
 ```
 
-## 仕組み
+## How it works
 
-`PlaywrightFixture` は以下のスコープで Playwright のリソースを管理します。
+`PlaywrightFixture` manages the Playwright resources at three different scopes:
 
-- `suite_fixture :playwright` — テストスイート全体で 1 度だけ Playwright ランタイムを起動し、終了時に `runtime.stop` を呼ぶ
-- `suite_fixture :browser` — Chromium を 1 回だけ launch し、終了時に `browser.close`
-- `fixture :page` — テストごとに新しい `BrowserContext` を作り、その上で `Page` を発行(テスト間の Cookie / ストレージを分離)
+- `suite_fixture :playwright` — starts the Playwright runtime once per suite and calls `runtime.stop` on cleanup.
+- `suite_fixture :browser` — launches Chromium once per suite and closes it on cleanup.
+- `fixture :page` — creates a fresh `BrowserContext` for every test (so cookies and storage are isolated) and returns a new `Page` on top of it.
 
-テストはキーワード引数 `|page:|` で必要なフィクスチャだけを宣言的に受け取ります。
+Tests declare which fixtures they need through keyword arguments. For example:
 
-## 参考
+```ruby
+test("...") do |page:|
+  page.goto("https://rubygems.org/")
+  # ...
+end
+```
 
-- smartest ドキュメント: https://smartest-rb.vercel.app/
+smartest resolves `page:` against the registered fixtures, and the dependency chain `page → browser → playwright` is wired up automatically.
+
+## References
+
+- smartest documentation: https://smartest-rb.vercel.app/
 - playwright-ruby-client: https://github.com/YusukeIwaki/playwright-ruby-client
