@@ -39,6 +39,8 @@ Running 1 test
 1 test, 1 passed, 0 failed
 ```
 
+![example](example.gif)
+
 ## Project layout
 
 ```

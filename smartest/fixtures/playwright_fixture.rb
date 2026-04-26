@@ -8,7 +8,7 @@ class PlaywrightFixture < Smartest::Fixture
   end
 
   suite_fixture :browser do |playwright:|
-    browser = playwright.chromium.launch(headless: true)
+    browser = playwright.chromium.launch(headless: false)
     cleanup { browser.close }
     browser
   end
